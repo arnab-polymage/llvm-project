@@ -309,7 +309,7 @@ void FlatAffineValueConstraints::convertLoopIVSymbolsToDims() {
   }
 }
 
-void FlatAffineValueConstraints::getIneqAsAffineValueMap(
+LogicalResult FlatAffineValueConstraints::getIneqAsAffineValueMap(
     unsigned pos, unsigned ineqPos, AffineValueMap &vmap,
     MLIRContext *context) const {
   unsigned numDims = getNumDimVars();
@@ -320,9 +320,11 @@ void FlatAffineValueConstraints::getIneqAsAffineValueMap(
 
   // Get expressions for local vars.
   SmallVector<AffineExpr, 8> memo(getNumVars(), AffineExpr());
-  if (failed(computeLocalVars(memo, context)))
-    assert(false &&
-           "one or more local exprs do not have an explicit representation");
+  if (failed(computeLocalVars(memo, context))) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "failed to derive expressions for all the local variables\n");
+    return failure();
+  }
   auto localExprs = ArrayRef<AffineExpr>(memo).take_back(getNumLocalVars());
 
   // Compute the AffineExpr lower/upper bound for this inequality.
@@ -352,6 +354,7 @@ void FlatAffineValueConstraints::getIneqAsAffineValueMap(
   getValues(pos + 1, getNumDimAndSymbolVars(), &trailingOperands);
   operands.append(trailingOperands.begin(), trailingOperands.end());
   vmap.reset(AffineMap::get(numDims - 1, numSyms, boundExpr), operands);
+  return success();
 }
 
 FlatAffineValueConstraints FlatAffineRelation::getDomainSet() const {

@@ -131,7 +131,7 @@ public:
   /// affine value map can either be a lower bound or an upper bound depending
   /// on the sign of atIneq(ineqPos, pos). Asserts if the row at `ineqPos` does
   /// not involve the `pos`th variable.
-  void getIneqAsAffineValueMap(unsigned pos, unsigned ineqPos,
+  LogicalResult getIneqAsAffineValueMap(unsigned pos, unsigned ineqPos,
                                AffineValueMap &vmap,
                                MLIRContext *context) const;
 

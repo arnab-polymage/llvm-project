@@ -2662,8 +2662,18 @@ createFullTiles(MutableArrayRef<AffineForOp> inputNest,
     cst.setDimSymbolSeparation(/*newSymbolCount=*/0);
 
     AffineValueMap lbVmap, ubVmap;
-    cst.getIneqAsAffineValueMap(/*pos=*/0, lbPos, lbVmap, b.getContext());
-    cst.getIneqAsAffineValueMap(/*pos=*/0, ubPos, ubVmap, b.getContext());
+    if (cst.getIneqAsAffineValueMap(/*pos=*/0, lbPos, lbVmap, b.getContext())
+            .failed()) {
+      LLVM_DEBUG(llvm::errs()
+                 << "Could not compute inequalities as affine value map\n");
+      return failure();
+    }
+    if (cst.getIneqAsAffineValueMap(/*pos=*/0, ubPos, ubVmap, b.getContext())
+            .failed()) {
+      LLVM_DEBUG(llvm::errs()
+                 << "Could not compute inequalities as affine value map\n");
+      return failure();
+    }
     AffineForOp fullTileLoop = createCanonicalizedAffineForOp(
         b, loop.getLoc(), lbVmap.getOperands(), lbVmap.getAffineMap(),
         ubVmap.getOperands(), ubVmap.getAffineMap());

@@ -48,7 +48,7 @@ struct AffineExprFlattener : public SimpleAffineExprFlattener {
 
   AffineExprFlattener(unsigned nDims, unsigned nSymbols)
       : SimpleAffineExprFlattener(nDims, nSymbols),
-        localVarCst(PresburgerSpace::getSetSpace(nDims, nSymbols)) {};
+        localVarCst(PresburgerSpace::getSetSpace(nDims, nSymbols)){};
 
 private:
   // Add a local variable (needed to flatten a mod, floordiv, ceildiv expr).
@@ -64,11 +64,12 @@ private:
     localVarCst.addLocalFloorDiv(dividend, divisor);
   }
 
-  LogicalResult addLocalIdSemiAffine(ArrayRef<int64_t> lhs,
-                                     ArrayRef<int64_t> rhs,
-                                     AffineExpr localExpr) override {
-    // AffineExprFlattener does not support semi-affine expressions.
-    return failure();
+  // Add local variables that represent semi-affine expression substitutions
+  // floordiv.
+  void addLocalIdSemiAffine(AffineExpr localExpr) override {
+    SimpleAffineExprFlattener::addLocalIdSemiAffine(localExpr);
+    // Update localVarCst.
+    localVarCst.appendVar(VarKind::Local);
   }
 };
 
@@ -128,10 +129,7 @@ struct SemiAffineExprFlattener : public AffineExprFlattener {
 
 } // namespace
 
-// Flattens the expressions in map. Returns failure if 'expr' was unable to be
-// flattened. For example two specific cases:
-// 1. an unhandled semi-affine expressions is found.
-// 2. has poison expression (i.e., division by zero).
+// Flattens the expressions in map.
 static LogicalResult
 getFlattenedAffineExprs(ArrayRef<AffineExpr> exprs, unsigned numDims,
                         unsigned numSymbols,
